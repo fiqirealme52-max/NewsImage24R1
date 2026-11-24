@@ -1,20 +1,25 @@
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import fs from "node:fs";
+import path from "node:path";
 
-const OUTPUT_DIR = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-const SOURCE = join(process.cwd(), "entry.png");
-const DEST = join(OUTPUT_DIR, "entry.png");
+const scriptDir = path.dirname(process.argv[1]);
+const sourcePath = path.join(scriptDir, "entry.png");
+const outputDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
+const outputPath = path.join(outputDir, "entry.png");
 
-if (!existsSync(SOURCE)) {
-  console.error(`Missing input image: ${SOURCE}`);
+if (!fs.existsSync(sourcePath)) {
+  console.error(`entry.png not found: ${sourcePath}`);
   process.exit(1);
 }
 
-mkdirSync(OUTPUT_DIR, { recursive: true });
-copyFileSync(SOURCE, DEST);
+fs.mkdirSync(outputDir, { recursive: true });
+fs.copyFileSync(sourcePath, outputPath);
 
-if (!existsSync(DEST)) {
-  console.error(`Copy failed: ${DEST} was not created`);
+const original = fs.readFileSync(sourcePath);
+const copied = fs.readFileSync(outputPath);
+
+if (original.length !== copied.length || !original.equals(copied)) {
+  console.error("verification failed: copied entry.png is not identical to entry.png");
   process.exit(1);
 }
-console.log(`Copied entry.png to ${DEST}`);
+
+console.log(`entry.png copied to ${outputPath} (${original.length} bytes, verified identical)`);
