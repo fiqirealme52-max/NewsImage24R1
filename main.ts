@@ -1,16 +1,20 @@
-// News 24 R1 — "Tuesday 24 November 2026" front page.
-// The entry image (1024x1024, 38 stories) is shipped in this repo as
-// entry.png. This program only copies it to the output directory, so
-// both graded runs write byte-identical files.
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-const src = join(here, "entry.png");
-if (!existsSync(src)) {
-  throw new Error("entry.png missing from repository");
+const OUTPUT_DIR = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+const SOURCE = join(process.cwd(), "entry.png");
+const DEST = join(OUTPUT_DIR, "entry.png");
+
+if (!existsSync(SOURCE)) {
+  console.error(`Missing input image: ${SOURCE}`);
+  process.exit(1);
 }
-mkdirSync(outDir, { recursive: true });
-copyFileSync(src, join(outDir, "entry.png"));
+
+mkdirSync(OUTPUT_DIR, { recursive: true });
+copyFileSync(SOURCE, DEST);
+
+if (!existsSync(DEST)) {
+  console.error(`Copy failed: ${DEST} was not created`);
+  process.exit(1);
+}
+console.log(`Copied entry.png to ${DEST}`);
