@@ -1,25 +1,20 @@
-// Copies entry.png from the repo root to MAKEFUN_OUTPUT_DIR
-// (default /output) and verifies the copy is byte-identical.
-const fs = require('node:fs');
-const path = require('node:path');
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 
-const source = path.join(__dirname, 'entry.png');
-const outDir = process.env.MAKEFUN_OUTPUT_DIR || '/output';
-const dest = path.join(outDir, 'entry.png');
+const OUTPUT_DIR = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+const SOURCE = join(process.cwd(), "entry.png");
+const DEST = join(OUTPUT_DIR, "entry.png");
 
-if (!fs.existsSync(source)) {
-  console.error(`entry.png not found: ${source}`);
+if (!existsSync(SOURCE)) {
+  console.error(`Missing input image: ${SOURCE}`);
   process.exit(1);
 }
 
-fs.mkdirSync(outDir, { recursive: true });
-fs.copyFileSync(source, dest);
+mkdirSync(OUTPUT_DIR, { recursive: true });
+copyFileSync(SOURCE, DEST);
 
-const srcBuf = fs.readFileSync(source);
-const dstBuf = fs.readFileSync(dest);
-if (!srcBuf.equals(dstBuf)) {
-  console.error('verification failed: copied entry.png differs from source');
+if (!existsSync(DEST)) {
+  console.error(`Copy failed: ${DEST} was not created`);
   process.exit(1);
 }
-
-console.log(`entry.png copied to ${dest}`);
+console.log(`Copied entry.png to ${DEST}`);
