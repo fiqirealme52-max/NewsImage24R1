@@ -1,25 +1,34 @@
-import fs from "node:fs";
-import path from "node:path";
+// News 24 R3 — hand the finished front page to the grader.
+//
+// The entry is a single finished image (entry.png, drawn by draw.py).
+// This entrypoint only moves that image into the grader's output
+// directory and proves the copy is byte-identical, so a broken or
+// half-written file can never be judged. It never draws anything.
+// R3 verification: run twice from the repo dir — both runs must exit 0
+// and leave a byte-identical entry.png in MAKEFUN_OUTPUT_DIR.
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const scriptDir = path.dirname(process.argv[1]);
-const sourcePath = path.join(scriptDir, "entry.png");
-const outputDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
-const outputPath = path.join(outputDir, "entry.png");
+const ART = "entry.png";
 
-if (!fs.existsSync(sourcePath)) {
-  console.error(`entry.png not found: ${sourcePath}`);
+function fail(message) {
+  console.error(`news24-r3: ${message}`);
   process.exit(1);
 }
 
-fs.mkdirSync(outputDir, { recursive: true });
-fs.copyFileSync(sourcePath, outputPath);
-
-const original = fs.readFileSync(sourcePath);
-const copied = fs.readFileSync(outputPath);
-
-if (original.length !== copied.length || !original.equals(copied)) {
-  console.error("verification failed: copied entry.png is not identical to entry.png");
-  process.exit(1);
+function main() {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const source = join(here, ART);
+  if (!existsSync(source)) fail(`missing ${ART} next to main.ts`);
+  const outDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
+  mkdirSync(outDir, { recursive: true });
+  const target = join(outDir, ART);
+  copyFileSync(source, target);
+  const a = readFileSync(source);
+  const b = readFileSync(target);
+  if (!a.equals(b)) fail("handed-in copy differs from entry.png");
+  console.log(`news24-r3: handed in ${target} (${a.length} bytes)`);
 }
 
-console.log(`entry.png copied to ${outputPath} (${original.length} bytes, verified identical)`);
+main();
