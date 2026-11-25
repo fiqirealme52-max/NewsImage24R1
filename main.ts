@@ -1,34 +1,39 @@
-// News 24 R3 — hand the finished front page to the grader.
+// News 24 R4 — hand the finished front page to the grader.
 //
-// The entry is a single finished image (entry.png, drawn by draw.py).
-// This entrypoint only moves that image into the grader's output
-// directory and proves the copy is byte-identical, so a broken or
-// half-written file can never be judged. It never draws anything.
-// R3 verification: run twice from the repo dir — both runs must exit 0
+// The front page is a single finished image (entry.png, drawn by draw.py).
+// This entrypoint only carries that image into the grader's output
+// directory and checks the delivered copy byte for byte, so a broken
+// or half-written file can never be judged. It never draws anything.
+// R4 verification: run twice from the repo dir — both runs must exit 0
 // and leave a byte-identical entry.png in MAKEFUN_OUTPUT_DIR.
-import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+// R4 changes vs R3 (same image pipeline): masthead title case 84px,
+// DATE CHECK names the two verified pre-17-Nov exclusions (UN 4 Nov,
+// UNICEF 25 Aug) — no other content changed.
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ART = "entry.png";
+const IMAGE = "entry.png";
+const TAG = "news24-r4";
 
-function fail(message) {
-  console.error(`news24-r3: ${message}`);
+const die = (why) => {
+  console.error(`${TAG}: ${why}`);
   process.exit(1);
-}
+};
 
-function main() {
-  const here = dirname(fileURLToPath(import.meta.url));
-  const source = join(here, ART);
-  if (!existsSync(source)) fail(`missing ${ART} next to main.ts`);
-  const outDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
-  mkdirSync(outDir, { recursive: true });
-  const target = join(outDir, ART);
-  copyFileSync(source, target);
-  const a = readFileSync(source);
-  const b = readFileSync(target);
-  if (!a.equals(b)) fail("handed-in copy differs from entry.png");
-  console.log(`news24-r3: handed in ${target} (${a.length} bytes)`);
-}
+const handIn = () => {
+  const root = dirname(fileURLToPath(import.meta.url));
+  const from = join(root, IMAGE);
+  if (!existsSync(from)) die(`missing ${IMAGE} next to main.ts`);
+  const destDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
+  mkdirSync(destDir, { recursive: true });
+  const to = join(destDir, IMAGE);
+  copyFileSync(from, to);
+  const src = readFileSync(from);
+  const dst = readFileSync(to);
+  if (!src.equals(dst)) die("delivered copy differs from entry.png");
+  const bytes = statSync(to).size;
+  console.log(`${TAG}: delivered ${to} (${bytes} bytes)`);
+};
 
-main();
+handIn();
